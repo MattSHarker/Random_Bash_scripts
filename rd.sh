@@ -7,7 +7,7 @@
 # TODO
     # add plus notation for bonuses ((3d5+1) -> 2, 6, 4)
 
-function rd()
+function rd
 {
     # Check parameters
     if [ $# -lt 1 ]
@@ -27,12 +27,8 @@ function rd()
     DICEINFO=$1
 
 
-    # create the regex pattern
-    REGEX=^[1-9][0-9]*[d][1-9][0-9]*$
-
-
     # check the input to ensure it is of proper format: [uint]d[unit]
-    if ! [[ $DICEINFO =~ $REGEX ]]
+    if ! [[ $DICEINFO =~ ^[1-9][0-9]*[d][1-9][0-9]*$ ]]
     then
         echo "Incorrect dice format. Format should follow standard DnD notation: 2d6, 5d4, etc"
         return 2
@@ -40,22 +36,28 @@ function rd()
 
 
     # parse the information
+
+    # save the original IFS
+    OIFS=$IFS
     IFS='d'
     read -ra INFO <<< "$DICEINFO"
 
-    QTY="${INFO[0]}"
+    DQTY="${INFO[0]}"
     SIDES="${INFO[1]}"
 
 
     # roll for each die
-    for ((i=1;i<=$QTY;i++))
+    for ((i=1;i<=$DQTY;i++))
     do
         # roll the die
         ROLL=$((1 + RANDOM % $SIDES))
 
         # print to console (-n prevents printing newline)
         echo -n "$ROLL "
-    done
+    done; echo
 
-    echo
+    # restore the original IFS
+    IFS=$OIFS
+
+    return 0
 }

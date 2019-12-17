@@ -12,7 +12,7 @@ function rd
 {
     # Check parameters
     if [ $# -lt 1 ]; then
-        echo "HELP MESSAGE HERE"
+        rdhelpmessage
         return 1
     fi 
 
@@ -24,8 +24,7 @@ function rd
     if [[ $DICEINFO == "-h" ]] ||	# accept multiple help formats
        [[ "$(echo $DICEINFO | tr '[:upper:]' '[:lower:]')" == "h" ]] ||
        [[ "$(echo $DICEINFO | tr '[:upper:]' '[:lower:]')" == "help" ]]; then
-       	echo "Format for one set of dice: rd 4d6"
-       	echo "Format for multiple sets of dice: rd 4d6 6"
+       	rdhelpmessage
        	return 0;
     fi
 
@@ -89,8 +88,7 @@ function rd
                 ;;
 
             h)  # help message
-                echo "HELP MESSAGE HERE"
-                echo
+                rdhelpmessage
                 return 0
                 ;;
 
@@ -105,7 +103,7 @@ function rd
                     return 1
                 fi
                 ;;
-            
+
             W)  # display sum of worst X dice
                 NUMWORST=$OPTARG
 
@@ -122,7 +120,7 @@ function rd
                     return 1
                 fi
                 ;;
-            
+
             ?)  # unknown flag
                 echo "Unknown flag entered: "
                 return 1
@@ -178,7 +176,7 @@ function rd
                 # record the value an index of the worst die
                 WORST=9223372036854775807   # int max for bash
                 WORSTIND=0
-                
+
                 # find the worst die
                 for ((k=0;k<${#BESTDICE[@]};k++)); do
                     if [ $((BESTDICE[$k])) -lt $WORST ] &&
@@ -205,7 +203,7 @@ function rd
             if [ $BONUS -ne 0 ]; then
                 echo -n "+ $BONUS = $((BESTTOTAL+BONUS))"
             fi
-            
+
             if [ $QUIET -eq 0 ]; then echo -ne "\t(Best $NUMBEST)"; fi
             echo    # formatting
         fi
@@ -220,7 +218,7 @@ function rd
                 # record the value an index of the best die
                 BEST=0
                 BESTIND=0
-                
+
                 # find the best die
                 for ((k=0;k<${#WORSTDICE[@]};k++)); do
                     if [ $((WORSTDICE[$k])) -gt $BEST ]; then
@@ -256,4 +254,33 @@ function rd
 
     # all the dice have been rolled
     return 0
+}
+
+function rdhelpmessage()
+{
+    printf "%s\n" "Example usage: rd 4d6 -r6 -b1 -B3"
+    printf "%s\n" ""
+
+    printf "%s\n" "List of flags and meanings"
+    printf "%s\n" "    -b  Bonus   Add (or subtract) a value from the roll's total value"
+    printf "%s\n" "                Requires an integer as input"
+    printf "%s\n" ""
+
+    printf "%s\n" "    -B  Best    Keep only the best X dice from the roll"
+    printf "%s\n" "                Requires an integer greater than 0 and less than the total number of dice"
+    printf "%s\n" ""
+
+    printf "%s\n" "    -h  Help    Displays this help message"
+    printf "%s\n" ""
+
+    printf "%s\n" "    -q  Quiet   Supresses the display of the Original, Best, and Worst labels"
+    printf "%s\n" ""
+
+    printf "%s\n" "    -r  Rolls   How many sets of dice to roll"
+    printf "%s\n" "                Requires an integer greater than 0"
+    printf "%s\n" ""
+    
+    printf "%s\n" "    -W  Worst   Keep only the worst # dice from the rolls"
+    printf "%s\n" "                Requires an integer greater than 0 and less than the total number of dice"
+    printf "%s\n" ""
 }

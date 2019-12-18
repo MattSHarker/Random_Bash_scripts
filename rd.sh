@@ -5,11 +5,35 @@
     # and returns numbers simulating a roll of those dice
 
 # TODO
-    # change echo to printf to allign text better
-    # create proper help message
+    # change echo to printf to align text better
+    # add more functions to make program cleaner
+   
 
 function rd
-{
+(
+    # prints the help message
+    function rdhelpmessage()
+    {
+        printf "%s\n\n" "Example usage: rd 4d6 -r6 -b1 -B3"
+
+        printf "%s\n"   "List of flags and meanings:"
+        printf "%s\n"   "    -b  Bonus   Add (or subtract) a value from the roll's total value"
+        printf "%s\n\n" "                Requires an integer as input"
+
+        printf "%s\n"   "    -B  Best    Keep only the best X dice from the roll"
+        printf "%s\n\n" "                Requires an integer greater than 0 and less than the total number of dice"
+
+        printf "%s\n"   "    -h  Help    Displays this help message"
+
+        printf "%s\n\n" "    -q  Quiet   Supresses the display of the Original, Best, and Worst labels"
+
+        printf "%s\n"   "    -r  Rolls   How many sets of dice to roll"
+        printf "%s\n\n" "                Requires an integer greater than 0"
+
+        printf "%s\n"   "    -W  Worst   Keep only the worst # dice from the rolls"
+        printf "%s\n\n" "                Requires an integer greater than 0 and less than the total number of dice"
+    }
+
     # Check parameters
     if [ $# -lt 1 ]; then
         rdhelpmessage
@@ -18,9 +42,8 @@ function rd
 
     # retreive the dice info
     DICEINFO=$1
-    shift   # needed for getopts
 
-    # print help information
+    # prints help information if requested
     if [[ $DICEINFO == "-h" ]] ||	# accept multiple help formats
        [[ "$(echo $DICEINFO | tr '[:upper:]' '[:lower:]')" == "h" ]] ||
        [[ "$(echo $DICEINFO | tr '[:upper:]' '[:lower:]')" == "help" ]]; then
@@ -38,9 +61,9 @@ function rd
 
     # save the original IFS
     OIFS=$IFS
-    IFS='d'
 
     # read the info into an array
+    IFS='d'
     read -ra INFO <<< "$DICEINFO"
 
     # restore the original IFS
@@ -50,15 +73,20 @@ function rd
     DQTY="${INFO[0]}"	# number of dice to roll
     SIDES="${INFO[1]}"	# number of sides per die
 
-    # variables for flags
+    # variables for options
     BONUS=0
     ROLLS=1
     NUMBEST=0
     NUMWORST=0
     QUIET=0
 
-    # parse the flags and set values
-    OPTIND=1
+    # reset OPTIND (allows this to work multiple times per console session)
+    OPTIND=1    
+
+    # shift getopts arguments into the proper position
+    shift   
+
+    # parse the options and set values
     while getopts "b:B:hqr:W:" opt; do
         case "$opt" in
             b)  # Bonus to add total roll
@@ -133,7 +161,6 @@ function rd
     for ((i=0;i<$ROLLS;i++)); do
         # create an array for the dice values
         ALLDICE=()
-
         TOTAL=0
 
 	    # roll each die
@@ -149,26 +176,21 @@ function rd
 	    done
 
         # print the array
-        for ((j=0;j<$DQTY;j++)); do
-            echo -n "${ALLDICE[$j]} "
-        done
+        for ((j=0;j<$DQTY;j++)); do echo -n "${ALLDICE[$j]} "; done
 
 
         # only show totals and bonuses if quiet was not used
         # print the grand total
         echo -n "= $TOTAL "
 
-        # add the bonus (if being used)
-        if [ $BONUS -ne 0 ]; then
-            echo -n "+ $BONUS = $((TOTAL+BONUS))"
-        fi
+        # add the bonus (if being used) and label it (if not quiet)
+        if [ $BONUS -ne 0 ]; then echo -n "+ $BONUS = $((TOTAL+BONUS))"; fi
 
         if [ $QUIET -eq 0 ]; then echo -ne "\t(Original)"; fi
         echo
 
         # create an array of the best X dice
         if [ $NUMBEST -ne 0 ]; then
-            BESTTOTAL=0
             BESTDICE=("${ALLDICE[@]}")
             DIFF=$((DQTY-NUMBEST))
 
@@ -191,6 +213,7 @@ function rd
             done
 
             # display the best dice
+            BESTTOTAL=0
             for ((j=0;j<$DQTY;j++)); do
                 echo -n "${BESTDICE[$j]} "
                 BESTTOTAL=$((BESTTOTAL+BESTDICE[$j]))
@@ -199,18 +222,14 @@ function rd
             # print the grand total
             echo -n "= $BESTTOTAL "
 
-            # add the bonus (if being used)
-            if [ $BONUS -ne 0 ]; then
-                echo -n "+ $BONUS = $((BESTTOTAL+BONUS))"
-            fi
-
+            # add the bonus (if being used) and label it (if not quiet)
+            if [ $BONUS -ne 0 ]; then echo -n "+ $BONUS = $((BESTTOTAL+BONUS))"; fi
             if [ $QUIET -eq 0 ]; then echo -ne "\t(Best $NUMBEST)"; fi
             echo    # formatting
-        fi
+        fi  # best dice
 
         # create an array of the worst X dice
-         if [ $NUMWORST -ne 0 ]; then
-            WORSTTOTAL=0
+        if [ $NUMWORST -ne 0 ]; then
             WORSTDICE=("${ALLDICE[@]}")
             DIFF=$((DQTY-NUMWORST))
 
@@ -232,6 +251,7 @@ function rd
             done
 
             # display the worst dice
+            WORSTTOTAL=0
             for ((j=0;j<$DQTY;j++)); do
                 echo -n "${WORSTDICE[$j]} "
                 WORSTTOTAL=$((WORSTTOTAL+WORSTDICE[$j]))
@@ -240,47 +260,16 @@ function rd
             # print the grand total
             echo -n "= $WORSTTOTAL "
 
-            # add the bonus (if being used)
-            if [ $BONUS -ne 0 ]; then
-                echo -n "+ $BONUS = $((WORSTTOTAL+BONUS))"
-            fi
-
+            # add the bonus (if being used) and label it (if not quiet)
+            if [ $BONUS -ne 0 ]; then echo -n "+ $BONUS = $((WORSTTOTAL+BONUS))"; fi
             if [ $QUIET -eq 0 ]; then echo -ne "\t(Worst $NUMWORST)"; fi
+
             echo    # formatting
-        fi
+        fi  # worst dice
 
     echo    # formatting
 	done
 
     # all the dice have been rolled
     return 0
-}
-
-function rdhelpmessage()
-{
-    printf "%s\n" "Example usage: rd 4d6 -r6 -b1 -B3"
-    printf "%s\n" ""
-
-    printf "%s\n" "List of flags and meanings"
-    printf "%s\n" "    -b  Bonus   Add (or subtract) a value from the roll's total value"
-    printf "%s\n" "                Requires an integer as input"
-    printf "%s\n" ""
-
-    printf "%s\n" "    -B  Best    Keep only the best X dice from the roll"
-    printf "%s\n" "                Requires an integer greater than 0 and less than the total number of dice"
-    printf "%s\n" ""
-
-    printf "%s\n" "    -h  Help    Displays this help message"
-    printf "%s\n" ""
-
-    printf "%s\n" "    -q  Quiet   Supresses the display of the Original, Best, and Worst labels"
-    printf "%s\n" ""
-
-    printf "%s\n" "    -r  Rolls   How many sets of dice to roll"
-    printf "%s\n" "                Requires an integer greater than 0"
-    printf "%s\n" ""
-    
-    printf "%s\n" "    -W  Worst   Keep only the worst # dice from the rolls"
-    printf "%s\n" "                Requires an integer greater than 0 and less than the total number of dice"
-    printf "%s\n" ""
-}
+)
